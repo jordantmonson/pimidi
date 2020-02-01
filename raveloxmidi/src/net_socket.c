@@ -111,33 +111,20 @@ void net_socket_add( int new_socket )
 	sockets[num_sockets - 1 ] = new_socket;
 }
 
-int net_socket_create(int family, char *ip_address, unsigned int port )
-{
-	int new_socket;
-
-	logging_printf(LOGGING_DEBUG, "net_socket_create: Creating socket for [%s]:%u, family=%d\n", ip_address, port, family);
-
-	new_socket = socket(family, SOCK_DGRAM, 0);
-	if( new_socket < 0 )
-	{
-		return errno;
-	}
-
-	return new_socket;
-}
-
 int net_socket_listener_create( int family, char *ip_address, unsigned int port )
 {
 	int new_socket = -1;
 	struct sockaddr_in6 socket_address;
 	socklen_t addr_len = 0;
 	int optionvalue = 0;
+	char addrstr[100];
 	
-	new_socket = net_socket_create( family, ip_address, port );
+	logging_printf(LOGGING_DEBUG, "net_socket_create: Creating socket for [%s]:%u, family=%d\n", ip_address, port, family);
 
+	new_socket = socket(family, SOCK_DGRAM, 0);
 	if( new_socket < 0 )
 	{ 
-		logging_printf( LOGGING_ERROR, "net_socket_listener_create: Unable to create socket %s:%u : %s\n", ip_address, port, strerror(new_socket));
+		logging_printf( LOGGING_ERROR, "net_socket_listener_create: Unable to create socket %s:%u : %s\n", ip_address, port, strerror(errno));
 		return new_socket;
 	}
 
@@ -152,6 +139,9 @@ int net_socket_listener_create( int family, char *ip_address, unsigned int port 
 	}
 			
 	get_sock_info( ip_address, port, (struct sockaddr *)&socket_address, &addr_len, NULL);
+	memset( addrstr, 0, 100 );
+	get_ip_string( (struct sockaddr *)&socket_address, addrstr, 100 );
+	logging_printf( LOGGING_DEBUG, "net_socket_listener_create: sockaddr to string=[%s]\n", addrstr );
 
 	if ( bind(new_socket, (struct sockaddr *)&socket_address, addr_len) < 0 )
 	{       
